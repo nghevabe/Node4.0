@@ -101,7 +101,7 @@ void setup_wifi(char* idw, char* passw) {
   Serial.print("Connecting to Wifi");
 
   
-  WiFi.begin("K2", "2910311770");
+  WiFi.begin(idw, passw);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
@@ -155,13 +155,20 @@ void callback(char* topic, byte* payload, unsigned int length) {
     // 2551500112
 
   String strSignal = String(Signal);
-  
+
+  strLength = strSignal.length();
+
+  if(strLength == 10)
+  {
   strRedValue = strSignal.substring(0, 3);
   strGreenValue = strSignal.substring(3, 6);
   strBlueValue = strSignal.substring(6, 9);
   strLed = strSignal.substring(9,10);
+  }
 
-  strLength = strSignal.length();
+ 
+
+  
 
       
 }

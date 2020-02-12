@@ -16,7 +16,6 @@ const uint16_t mqtt_port = 11359;
 
 String strValue = "";
 String strLed = "";
-String strSensor = "";
 
 String strRedValue = "";
 String strGreenValue = "";
@@ -25,6 +24,10 @@ String strBlueValue = "";
 int strLength;
 
 char Signal[20] = "";
+
+String value_sensor = "OFF";
+
+
 
 // Led01
 const int led01_Pin_Red =  15; 
@@ -44,32 +47,20 @@ const int led03_Pin_Blue =  16;
 WiFiClient espClient;// Tạo đối tượng wificlient
 PubSubClient client(espClient);// Khai báo là client có thuộc tính của PubSubClient
 
+
 ESP8266WebServer server(80); //Server on port 80
 
 
 void setup() {
   Serial.begin(115200);
 
-  pinMode(led03_Pin_Red, OUTPUT);
-  pinMode(led03_Pin_Green, OUTPUT);
-  pinMode(led03_Pin_Blue, OUTPUT);
-  
-  pinMode(led02_Pin_Red, OUTPUT);
-  pinMode(led02_Pin_Green, OUTPUT);
-  pinMode(led02_Pin_Blue, OUTPUT);
-  
-  pinMode(led01_Pin_Red, OUTPUT);
-  pinMode(led01_Pin_Green, OUTPUT);
-  pinMode(led01_Pin_Blue, OUTPUT);
-
- 
-
+  pinMode(0, INPUT);
 
   setup_wifi("K2", "2910311770"); // Hàm tự viết ở dưới để kết nối wifi
 
    
   client.setServer(mqtt_server, mqtt_port);// Hàm kết nối vào mqtt server
-  client.setCallback(callback);
+  //client.setCallback(callback);
 }
 
 void setup_wifi(char* idw, char* passw) {
@@ -96,7 +87,7 @@ void reconnect() {
   while (!client.connected()) {// Nếu chưa kết nối
     Serial.print("Attempting MQTT connection..."); // thì in ra dòng này
     // Attempt to connect
-    if (client.connect("ESP_Home",mqtt_user, mqtt_pwd)) { //nếu kết nối đúng 
+    if (client.connect("LinhTran01",mqtt_user, mqtt_pwd)) { //nếu kết nối đúng 
       Serial.println("connected");// in ra là đã kết nối
   
        //client.publish(mqtt_topic_pub, "Linh Tran");
@@ -112,47 +103,7 @@ void reconnect() {
   }
 }
 
-void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
 
-  for(int i=0;i<20;i++)
-  {
-    Signal[i] = Signal[10];
-  }
-  
-  for (int i = 0; i < length; i++) {
-   
-    Signal[i] = payload[i];
-    
-  }
-  Serial.println(Signal);
-     //Serial
-     // USB\VID_1A86&PID_7523
-    // 
-    // 2551500112
-
-  String strSignal = String(Signal);
-  
-  strLength = strSignal.length();
-
-  if(strLength == 10)
-  {
-  strRedValue = strSignal.substring(0, 3);
-  strGreenValue = strSignal.substring(3, 6);
-  strBlueValue = strSignal.substring(6, 9);
-  strLed = strSignal.substring(9,10);
-  }
-  
-  if(strLength < 10)
-  {
-    
-  strSensor = strSignal;
-
-  }
-      
-}
 
 
 void loop() {
@@ -171,69 +122,29 @@ void loop() {
     client.loop();
     long now = millis();// gán thời gian bây giờ là millis
 
-        int RedValue = strRedValue.toInt();
-        int GreenValue = strGreenValue.toInt();
-        int BlueValue = strBlueValue.toInt();
+    int x = digitalRead(0);
+    
+    if(x == 1){
+      Serial.println("ON");
+      if(value_sensor == "OFF")
+      {
+      client.publish(mqtt_topic_pub, "ON");
+      value_sensor = "ON";
+      }
+    }
+    
+     if(x == 0){
+      Serial.println("OFF");
+      if(value_sensor == "ON")
+      {
+      client.publish(mqtt_topic_pub, "OFF");
+      value_sensor = "OFF";
+      }
+    }
 
-        //Serial.println("do dai: ");
-        //Serial.println(strLength);
-     
-         if(strLength == 10)
-         {
-
-         if((strLed == "1"))
-        {
-
-         analogWrite(led01_Pin_Red, RedValue); 
-         analogWrite(led01_Pin_Green, GreenValue);
-         analogWrite(led01_Pin_Blue, BlueValue);
-          
-        }
-
-         if((strLed == "2"))
-        {
-
-         analogWrite(led02_Pin_Red, RedValue); 
-         analogWrite(led02_Pin_Green, GreenValue);
-         analogWrite(led02_Pin_Blue, BlueValue);
-             
-        }
-
-          if((strLed == "3"))
-        {
-         analogWrite(led03_Pin_Red, RedValue); 
-         analogWrite(led03_Pin_Green, GreenValue);
-         analogWrite(led03_Pin_Blue, BlueValue);
-        
-  
-        }
-
-       }
-
-        if(strLength < 10)
-        {
-
-            if(strSensor == "ON"){
-              
-              analogWrite(led01_Pin_Red, 255); 
-              analogWrite(led01_Pin_Green, 255);
-              analogWrite(led01_Pin_Blue, 255);
-              Serial.println(" ON ! "); 
-              
-            }
-
-            if(strSensor == "OFF"){
-
-              analogWrite(led01_Pin_Red, 0); 
-              analogWrite(led01_Pin_Green, 0);
-              analogWrite(led01_Pin_Blue, 0);
-              Serial.println(" OFF ! "); 
-              
-            }
-          
-        }
+         
       
-         delay(500);
+         delay(1000);
                  
 
            
