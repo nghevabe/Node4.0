@@ -3,6 +3,7 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <EEPROM.h>
 #include<string>
 // Update these with values suitable for your network.
 
@@ -11,6 +12,9 @@
 #define mqtt_topic_sub "SMART_PROJECT/ESP_01"
 #define mqtt_user "dhvuddfk"
 #define mqtt_pwd "-2Y-VhjTn8lE"
+
+void writeString(char add,String data);
+String read_String(char add);
 
 const uint16_t mqtt_port = 11359;
 String inString = "";
@@ -30,6 +34,8 @@ char c_pass[] = "x";
 char mes ;
 
 int data;
+
+int time_counter = 0;
 
 // Led01
 const int led01_Pin_Red =  15; 
@@ -58,6 +64,13 @@ const char* password = "12345678";
     int id_length = 0;
     int pass_length = 0;
 
+    int idLoad_length = 0;
+
+    int passLoad_length = 0;
+
+    String id_load;
+    String pass_load;
+
 
 ESP8266WebServer server(80); //Server on port 80
 
@@ -82,19 +95,25 @@ void setup() {
 
   IPAddress myIP = WiFi.softAPIP(); //Get IP address
 
+  delay(2000);
+
+  LoadEeprom();
+
+  Get_PassAnsId();
+
   server.on("/", handleRoot);        
 
   server.on("/wifi", handleMesseger);  
 
-  //setup_wifi(); // Hàm tự viết ở dưới để kết nối wifi
 
-   server.begin();    
-  //client.setServer(mqtt_server, mqtt_port);// Hàm kết nối vào mqtt server
-  //client.setCallback(callback);
+  server.begin();  
+  
+  
 }
 
 void setup_wifi(char* idw, char* passw) {
 
+  time_counter = 0; 
   delay(10);
   // We start by connecting to a WiFi network
   Serial.println();
@@ -102,14 +121,34 @@ void setup_wifi(char* idw, char* passw) {
 
   
   WiFi.begin(idw, passw);
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED && time_counter < 25) {
     delay(500);
     Serial.print(".");
+    time_counter ++ ;
   }
+
+  if(time_counter > 20){
+    Serial.println("WiFi connect Fail");
+    Serial.println("Check Id and PassWord");
+  }
+
+  if(time_counter < 20)
+  {
   Serial.println("");
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
+
+  //
+   if(idLoad_length == 0 && passLoad_length == 0){
+        SaveEeprom(idw, passw);
+   }
+
+  }
+
+  // 
+
+ 
 }
 
 void reconnect() {
@@ -117,7 +156,7 @@ void reconnect() {
   while (!client.connected()) {// Nếu chưa kết nối
     Serial.print("Attempting MQTT connection..."); // thì in ra dòng này
     // Attempt to connect
-    if (client.connect("ESP8266Client",mqtt_user, mqtt_pwd)) { //nếu kết nối đúng 
+    if (client.connect("ESP_Beta01",mqtt_user, mqtt_pwd)) { //nếu kết nối đúng 
       Serial.println("connected");// in ra là đã kết nối
   
        //client.publish(mqtt_topic_pub, "Linh Tran");
@@ -149,11 +188,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     
   }
   Serial.println(Signal);
-     //Serial
-     // USB\VID_1A86&PID_7523
-    // 
-    // 2551500112
-
+ 
   String strSignal = String(Signal);
 
   strLength = strSignal.length();
@@ -202,11 +237,104 @@ void handleMesseger() {                         //Handle POST Request
       Serial.println("=====");
       
       setup_wifi(idWifi,passWifi);
+      
       client.setServer(mqtt_server, mqtt_port);// Hàm kết nối vào mqtt server
       client.setCallback(callback);
     }
     
 
+}
+
+void SaveEeprom(char* idw, char* passw){
+
+    EEPROM.begin(512);
+    Serial.print("Writing Data...");
+  
+    delay(1000);
+    writeString(10, idw);  //Address 10 and String type data
+    delay(1000);
+    writeString(30, passw);  //Address 30 and String type data
+    delay(1000);
+
+    
+    Serial.println("Done");
+  
+}
+
+void Get_PassAnsId(){
+
+  idLoad_length = id_load.length();
+  passLoad_length = pass_load.length();
+  
+   if(idLoad_length > 0 && passLoad_length > 0)
+  {
+  Serial.println("Load Data: ");
+  Serial.println(id_load);
+  Serial.println(pass_load);
+
+    char idWifi[50]; 
+    char passWifi[50];
+    id_load.toCharArray(idWifi, 50);
+    pass_load.toCharArray(passWifi, 50);
+
+  setup_wifi(idWifi,passWifi);
+  delay(2000);
+  client.setServer(mqtt_server, mqtt_port);// Hàm kết nối vào mqtt server
+  client.setCallback(callback);
+  
+  delay(10);
+  } else {
+    Serial.println("Don't have any Data to Load");
+    Serial.println("Please Connect With ESP To Share Wifi");
+
+    
+    
+  }
+  
+}
+
+void LoadEeprom(){
+
+  EEPROM.begin(512);
+  id_load = read_String(10);
+  delay(1000);
+  pass_load = read_String(30);
+  delay(1000);
+
+  
+
+ 
+  
+}
+
+void writeString(char add,String data)
+{
+  int _size = data.length();
+  int i;
+  for(i=0;i<_size;i++)
+  {
+    EEPROM.write(add+i,data[i]);
+  }
+  EEPROM.write(add+_size,'\0');   //Add termination null character for String Data
+  EEPROM.commit();
+}
+
+
+String read_String(char add)
+{
+  int i;
+  char data[100]; //Max 100 Bytes
+  int len=0;
+  unsigned char k;
+  k=EEPROM.read(add);
+  while(k != '\0' && len<500)   //Read until null character
+  {    
+    k=EEPROM.read(add+len);
+    data[len]=k;
+    len++;
+  }
+  data[len]='\0';
+  return String(data);
 }
   
 
@@ -214,7 +342,7 @@ void loop() {
   
   server.handleClient(); 
 
-  if(id_length > 0 && pass_length > 0){
+  if(idLoad_length > 0 && passLoad_length > 0){
   if (!client.connected()) {
     reconnect();
 
