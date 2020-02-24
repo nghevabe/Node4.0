@@ -370,26 +370,26 @@ void loop() {
          if((strLed == "1"))
         {
 
-         analogWrite(led01_Pin_Red, RedValue); 
-         analogWrite(led01_Pin_Green, GreenValue);
-         analogWrite(led01_Pin_Blue, BlueValue);
+         analogWrite(led01_Pin_Red, RedValue * 3.8); 
+         analogWrite(led01_Pin_Green, GreenValue * 3.8);
+         analogWrite(led01_Pin_Blue, BlueValue * 3.8);
           
         }
 
          if((strLed == "2"))
         {
 
-         analogWrite(led02_Pin_Red, RedValue); 
-         analogWrite(led02_Pin_Green, GreenValue);
-         analogWrite(led02_Pin_Blue, BlueValue);
+         analogWrite(led02_Pin_Red, RedValue * 3.8); 
+         analogWrite(led02_Pin_Green, GreenValue * 3.8);
+         analogWrite(led02_Pin_Blue, BlueValue * 3.8);
              
         }
 
           if((strLed == "3"))
         {
-         analogWrite(led03_Pin_Red, RedValue); 
-         analogWrite(led03_Pin_Green, GreenValue);
-         analogWrite(led03_Pin_Blue, BlueValue);
+         analogWrite(led03_Pin_Red, RedValue * 3.8); 
+         analogWrite(led03_Pin_Green, GreenValue * 3.8);
+         analogWrite(led03_Pin_Blue, BlueValue * 3.8);
         
   
         }
