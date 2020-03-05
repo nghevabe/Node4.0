@@ -23,6 +23,8 @@ String strBlueValue = "";
 
 int strLength;
 
+int current_value_sensor = 0;
+
 char Signal[20] = "";
 
 
@@ -124,23 +126,21 @@ void loop() {
 
     int value_sensor = analogRead(A0);
 
-    if(value_sensor > 200)
-    {
+    
+    if(current_value_sensor == 0){
+        current_value_sensor = value_sensor;
+    }
 
+    if((value_sensor - current_value_sensor) >= 15){
         client.publish(mqtt_topic_pub, "ON");
         Serial.println("ON");
         Serial.println(value_sensor);
-
+        current_value_sensor = value_sensor;
+        delay(10000);
+    } else {
+      current_value_sensor = value_sensor;
     }
 
-    if(value_sensor <= 200)
-    {
-
-        client.publish(mqtt_topic_pub, "OFF");
-        Serial.println("OFF");
-        Serial.println(value_sensor);
-
-    }
 
     Serial.println("Value: ");
     Serial.println(value_sensor);
@@ -148,7 +148,7 @@ void loop() {
    
          
       
-    delay(2000);
+    delay(600);
                  
 
            
