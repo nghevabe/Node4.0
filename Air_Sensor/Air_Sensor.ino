@@ -131,7 +131,7 @@ void loop() {
         current_value_sensor = value_sensor;
     }
 
-    if((value_sensor - current_value_sensor) >= 15){
+    if((value_sensor - current_value_sensor) >= 10){
         client.publish(mqtt_topic_pub, "ON");
         Serial.println("ON");
         Serial.println(value_sensor);
